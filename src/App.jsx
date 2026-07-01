@@ -20,21 +20,9 @@ export default function App() {
   const frameCount = 300;
   const [active, setActive] = useState(0);
 
-  // ✅ FIXED: now uses /public instead of /src
+  // ✅ ONLY CHANGE: now uses public folder
   const framePath = (index) =>
     `/frames/frame_${String(index).padStart(3, "0")}.png`;
-
-  // simple cache so we don't spam reload images
-  const imageCache = useRef({});
-
-  const getImage = (index) => {
-    if (!imageCache.current[index]) {
-      const img = new Image();
-      img.src = framePath(index);
-      imageCache.current[index] = img;
-    }
-    return imageCache.current[index];
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -82,12 +70,13 @@ export default function App() {
     if (!canvas || !ctx) return;
 
     const render = (index) => {
-      const img = getImage(index);
+      const img = new Image();
+      img.src = framePath(index);
 
-      if (!img.complete) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
     };
 
     const trigger = ScrollTrigger.create({
