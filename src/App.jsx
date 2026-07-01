@@ -19,10 +19,23 @@ export default function App() {
 
   const frameCount = 300;
   const [active, setActive] = useState(0);
-  const framePath = (index) =>
-    `/src/assets/frames/frame_${String(index).padStart(3, "0")}.png`;
 
-  
+  // ✅ FIXED: now uses /public instead of /src
+  const framePath = (index) =>
+    `/frames/frame_${String(index).padStart(3, "0")}.png`;
+
+  // simple cache so we don't spam reload images
+  const imageCache = useRef({});
+
+  const getImage = (index) => {
+    if (!imageCache.current[index]) {
+      const img = new Image();
+      img.src = framePath(index);
+      imageCache.current[index] = img;
+    }
+    return imageCache.current[index];
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -39,24 +52,26 @@ export default function App() {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     };
   }, []);
+
   const discoverData = [
-  {
-    title: "Cosmos Variants",
-    text: "Different species of Garden Cosmos with soft floral tones.",
-  },
-  {
-    title: "Growth Stages",
-    text: "From seed to full bloom — a visual life cycle.",
-  },
-  {
-    title: "Environment",
-    text: "Cosmos thrive in warm, lightly dry environments.",
-  },
-  {
-    title: "Care Guide",
-    text: "Minimal watering, full sun, and light soil conditions.",
-  },
-];
+    {
+      title: "Cosmos Variants",
+      text: "Different species of Garden Cosmos with soft floral tones.",
+    },
+    {
+      title: "Growth Stages",
+      text: "From seed to full bloom — a visual life cycle.",
+    },
+    {
+      title: "Environment",
+      text: "Cosmos thrive in warm, lightly dry environments.",
+    },
+    {
+      title: "Care Guide",
+      text: "Minimal watering, full sun, and light soil conditions.",
+    },
+  ];
+
   // -----------------------------
   // SCROLL ANIMATION
   // -----------------------------
@@ -67,13 +82,12 @@ export default function App() {
     if (!canvas || !ctx) return;
 
     const render = (index) => {
-      const img = new Image();
-      img.src = framePath(index);
+      const img = getImage(index);
 
-      img.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      };
+      if (!img.complete) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     };
 
     const trigger = ScrollTrigger.create({
@@ -81,7 +95,7 @@ export default function App() {
       start: "top top",
       end: "+=1500",
       scrub: true,
-      pin: false, // IMPORTANT: you're using fixed canvas already
+      pin: false,
       onUpdate: (self) => {
         const frame = Math.min(
           frameCount - 1,
@@ -101,61 +115,52 @@ export default function App() {
   return (
     <>
       <section className="hero1">
-             <nav>
-               <ul className="links">
-              <li>Home</li>
-              <li>Discover</li>
-              <li>About</li>
-              <li>Help Us Grow</li>
-              </ul>
-    </nav> 
-          <div className="firstbackground">
-            
-            <h1 className="h1intro">
-               Rose of Winter
-            </h1>
-            <p className="pintro">Camelia japonica</p>
-            
-            <p className="pintro"> Elegant evergreen bloom. It thrives in cold months, symbolizing quiet strength and timeless beauty. </p>
-          </div>
-          
+        <nav>
+          <ul className="links">
+            <li>Home</li>
+            <li>Discover</li>
+            <li>About</li>
+            <li>Help Us Grow</li>
+          </ul>
+        </nav>
+
+        <div className="firstbackground">
+          <h1 className="h1intro">Rose of Winter</h1>
+          <p className="pintro">Camelia japonica</p>
+          <p className="pintro">
+            Elegant evergreen bloom. It thrives in cold months, symbolizing
+            quiet strength and timeless beauty.
+          </p>
+        </div>
       </section>
-      
+
       <section className="hero">
         <canvas ref={canvasRef} className="hero-canvas" />
       </section>
-     
-            
-    
-     
 
-    
       <section>
         <h1 className="title2">Discover</h1>
       </section>
+
       <section className="discover">
-  
-  
-  <div className="discover-menu">
-    {discoverData.map((item, index) => (
-      <div
-        key={index}
-        className={`menu-item ${active === index ? "active" : ""}`}
-        onClick={() => setActive(index)}
-      >
-        <span className="dot"></span>
-        {item.title}
-      </div>
-    ))}
-  </div>
+        <div className="discover-menu">
+          {discoverData.map((item, index) => (
+            <div
+              key={index}
+              className={`menu-item ${active === index ? "active" : ""}`}
+              onClick={() => setActive(index)}
+            >
+              <span className="dot"></span>
+              {item.title}
+            </div>
+          ))}
+        </div>
 
-  
-  <div className="discover-content">
-    <h2>{discoverData[active].title}</h2>
-    <p>{discoverData[active].text}</p>
-  </div>
-
-</section>
+        <div className="discover-content">
+          <h2>{discoverData[active].title}</h2>
+          <p>{discoverData[active].text}</p>
+        </div>
+      </section>
     </>
   );
 }
